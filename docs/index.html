@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>短期の情報源</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1c1c1a;--sub:#6b6a65;--line:#e4e2dc;--accent:#1f5fbf;--up:#c0392b;--down:#1e7d4f;--warn-bg:#fdecea;--warn:#a5281b;--note-bg:#eef3fb}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#1e1e1c;--ink:#ecebe6;--sub:#a3a29c;--line:#33322f;--accent:#6ea2f0;--up:#f07563;--down:#5cc28e;--warn-bg:#3a1f1b;--warn:#f3a497;--note-bg:#1d2633}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:12px 16px 0}
+h1{font-size:17px;margin:0}
+.meta{color:var(--sub);font-size:12px}
+nav{display:flex;gap:4px;margin-top:8px}
+nav button{flex:1;border:0;background:none;color:var(--sub);font:inherit;font-weight:600;padding:8px 0;border-bottom:2px solid transparent}
+nav button.on{color:var(--ink);border-color:var(--accent)}
+main{max-width:720px;margin:0 auto;padding:12px 16px 48px}
+.note{background:var(--note-bg);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--sub);margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.name{font-weight:700}.code{color:var(--sub);font-size:13px;margin-right:6px}
+.chg{font-weight:700;font-variant-numeric:tabular-nums}.chg.up{color:var(--up)}.chg.down{color:var(--down)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 10px;margin:8px 0;font-size:13px}
+.grid div span{display:block;color:var(--sub);font-size:11px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.tag{font-size:12px;border-radius:999px;padding:1px 8px;background:var(--note-bg)}
+.red{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:6px 8px;font-size:13px;margin:6px 0}
+.links a{display:block;font-size:13px;color:var(--accent);text-decoration:none;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acts{display:flex;gap:8px;margin-top:8px}
+.acts a,.acts button{flex:1;text-align:center;font:inherit;font-size:13px;border:1px solid var(--line);background:none;color:var(--ink);border-radius:8px;padding:6px;text-decoration:none}
+label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}
+input,select{width:100%;font:inherit;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.res{margin-top:14px}.big{font-size:28px;font-weight:700}
+.ok{color:var(--down);font-weight:700}.ng{color:var(--warn);font-weight:700}
+.empty{color:var(--sub);text-align:center;padding:24px 0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>短期の情報源</h1>
+  <div class="meta" id="meta">読み込み中…</div>
+  <nav><button data-t="hot" class="on">値動き</button><button data-t="ev">出来事</button><button data-t="calc">株数の計算</button></nav>
+</header>
+<main>
+  <section id="hot">
+    <div class="note">今日の値上がり上位のうち、出来高が急に増えた銘柄。<b>推奨ではない。</b>「株数が増える開示」がある銘柄は、上がった所で売りが出やすい。「開示なし」は話題だけで動いている可能性が高い。</div>
+    <div id="hotList"></div>
+  </section>
+  <section id="ev" class="hidden">
+    <div class="note">直近3営業日の適時開示から、上方修正・増配・自社株買いを全上場企業で拾ったもの。<b>推奨ではない。</b>修正率はPDFの表から機械で読んだ値なので、原文で確認する。</div>
+    <div id="evList"></div>
+  </section>
+  <section id="calc" class="hidden">
+    <div class="note">株数と損失の計算だけ。枠の残り（20万円）と今月の損益（−5万円で停止）はPCのツールで確認してから発注する。</div>
+    <label>枠</label>
+    <select id="kind"><option value="値動き">値動き枠（1回の損失1万円・期限5営業日）</option><option value="出来事">出来事枠（1回の損失2万円・期限20営業日）</option></select>
+    <label>銘柄</label><input id="cname" placeholder="コードや銘柄名（メモ）">
+    <div class="row2">
+      <div><label>買値</label><input id="buy" type="number" inputmode="decimal"></div>
+      <div><label>損切りの値段</label><input id="stop" type="number" inputmode="decimal"></div>
+    </div>
+    <div class="row2">
+      <div><label>利益確定の目安</label><input id="target" type="number" inputmode="decimal"></div>
+      <div><label>ふだんの1日の値幅（%）</label><input id="rng" type="number" inputmode="decimal" placeholder="任意"></div>
+    </div>
+    <div class="res" id="res"></div>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const yen = v => Math.round(v).toLocaleString("ja-JP");
+const pct = (v, d = 1) => v == null ? "—" : (v > 0 ? "+" : "") + v.toFixed(d) + "%";
+const md = d => d ? `${+d.slice(4, 6)}/${+d.slice(6)}` : "";
+const KINDS = {"出来事": {risk: 20000, days: 20}, "値動き": {risk: 10000, days: 5}};
+const CAP = 200000;
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => show(b.dataset.t));
+function show(t) {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x.dataset.t === t));
+  ["hot", "ev", "calc"].forEach(id => $("#" + id).classList.toggle("hidden", id !== t));
+  try { localStorage.setItem("tab", t); } catch (e) {}
+  scrollTo(0, 0);
+}
+
+function links(items) {
+  return items.length ? `<div class="links">${items.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${md(x.date)} ${esc(x.title)}</a>`).join("")}</div>` : "";
+}
+function acts(r, kind) {
+  return `<div class="acts"><a href="https://finance.yahoo.co.jp/quote/${esc(r.code)}.T" target="_blank" rel="noopener">Yahooで見る</a>
+    <button onclick='toCalc(${JSON.stringify({code: r.code, name: r.name, px: r.px, rng: r.rng, kind})})'>株数を計算</button></div>`;
+}
+
+function renderHot(h) {
+  if (!h || !h.rows) return $("#hotList").innerHTML = `<div class="empty">まだデータがない</div>`;
+  $("#hotList").innerHTML = `<div class="meta" style="margin-bottom:8px">${esc(h.at)} 時点・値上がり+5%以上 ${h.total}件 → 出来高急増など ${h.rows.length}件（株価は約20分遅れ）</div>` +
+    (h.rows.map(r => `<div class="card">
+      <div class="top"><div><span class="code">${esc(r.code)}</span><span class="name">${esc(r.name)}</span></div><div class="chg up">${pct(r.chg)}</div></div>
+      <div class="grid"><div><span>株価</span>${yen(r.px)}円</div><div><span>出来高</span>${r.vr.toFixed(1)}倍</div><div><span>1年の上昇率</span>${pct(r.y1, 0)}</div>
+        <div><span>売買代金</span>${r.value.toFixed(1)}億/日</div><div><span>1日の値幅</span>${r.rng == null ? "—" : r.rng.toFixed(1) + "%"}</div><div><span>100株</span>${yen(r.px * 100)}円</div></div>
+      ${r.dil.length ? `<div class="red">株数が増える開示：${r.dil.slice(0, 2).map(x => md(x.date) + " " + esc(x.title.slice(0, 40))).join("／")}</div>` : ""}
+      ${r.news.length ? links(r.news) : `<div class="tags"><span class="tag">開示なし</span></div>`}
+      ${acts(r, "値動き")}</div>`).join("") || `<div class="empty">条件に合う銘柄はない</div>`);
+}
+
+function renderEv(e) {
+  if (!e || !e.rows) return $("#evList").innerHTML = `<div class="empty">まだデータがない</div>`;
+  $("#evList").innerHTML = `<div class="meta" style="margin-bottom:8px">${esc(e.at)} 時点・開示 ${e.disclosures}件 → 出来事 ${e.events}件 → ${e.rows.length}社</div>` +
+    (e.rows.map(r => `<div class="card">
+      <div class="top"><div><span class="code">${esc(r.code)}</span><span class="name">${esc(r.name)}</span></div><div class="chg ${r.chg >= 0 ? "up" : "down"}">反応 ${pct(r.chg)}</div></div>
+      <div class="tags">${r.kinds.map(k => `<span class="tag">${esc(k)}</span>`).join("")}${r.rev != null ? `<span class="tag">営業利益の修正 ${pct(r.rev)}</span>` : ""}<span class="tag">${md(r.date)} ${esc(r.time)}</span></div>
+      <div class="grid"><div><span>現在値</span>${yen(r.px)}円</div><div><span>出来事前3ヶ月</span>${pct(r.run, 0)}</div><div><span>反応日の出来高</span>${r.vr == null ? "—" : r.vr.toFixed(1) + "倍"}</div>
+        <div><span>売買代金</span>${r.value.toFixed(1)}億/日</div><div><span>1日の値幅</span>${r.rng.toFixed(1)}%</div><div><span>100株</span>${yen(r.px * 100)}円</div></div>
+      ${links(r.links.map(x => ({...x, date: r.date})))}
+      ${acts(r, "出来事")}</div>`).join("") || `<div class="empty">条件に合う出来事はない</div>`);
+}
+
+function toCalc(r) {
+  $("#kind").value = r.kind; $("#cname").value = `${r.code} ${r.name}`;
+  $("#buy").value = Math.round(r.px); $("#rng").value = r.rng ? r.rng.toFixed(1) : "";
+  $("#stop").value = ""; $("#target").value = "";
+  show("calc"); calc(); $("#stop").focus();
+}
+
+function busdayAfter(n) {  // 土日だけを除く。祝日は数えていない
+  const d = new Date(); let k = 0;
+  while (k < n) { d.setDate(d.getDate() + 1); if (d.getDay() % 6) k++; }
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function calc() {
+  const k = KINDS[$("#kind").value], buy = +$("#buy").value, stop = +$("#stop").value, target = +$("#target").value, rng = +$("#rng").value;
+  const res = $("#res");
+  if (!buy || !stop) return res.innerHTML = `<div class="meta">買値と損切りの値段を入れる。100株で損失を${yen(k.risk)}円に収めるなら、1株の損失は${yen(k.risk / 100)}円まで${buy ? `（損切り ${yen(buy - k.risk / 100)}円）` : ""}。</div>`;
+  if (stop >= buy) return res.innerHTML = `<div class="ng">損切りの値段は買値より下に置く</div>`;
+  const per = buy - stop, byRisk = Math.floor(k.risk / per), byCap = Math.floor(CAP / buy);
+  const shares = Math.floor(Math.min(byRisk, byCap) / 100) * 100, stopPct = per / buy * 100;
+  const checks = [
+    [`100株で1回の損失が${k.risk / 10000}万円以内`, byRisk >= 100, `1株の損失 ${yen(per)}円 → ${byRisk}株まで`],
+    ["100株で20万円以内", buy * 100 <= CAP, `100株 ${yen(buy * 100)}円`],
+    ["損切りの幅がふだんの1日の値幅より広い", !rng || stopPct >= rng, rng ? `損切り幅 ${stopPct.toFixed(1)}%／値幅 ${rng.toFixed(1)}%` : "値幅が未入力"],
+  ];
+  const ok = checks.every(c => c[1]);
+  res.innerHTML = `<div class="${ok ? "ok" : "ng"}">${ok ? "ルールに収まる" : "ルールに収まらない → 見送り"}</div>
+    <div class="big">${shares}株</div>
+    <div class="grid"><div><span>取得額</span>${yen(shares * buy)}円</div><div><span>損切りで</span>${shares ? "−" + yen(shares * per) : "0"}円</div>
+      <div><span>目安到達で</span>${target ? (target > buy ? "+" : "") + yen(shares * (target - buy)) + "円" : "—"}</div>
+      <div><span>損益比</span>${target ? ((target - buy) / per).toFixed(1) : "—"}</div><div><span>期限</span>${busdayAfter(k.days)}</div><div><span>損切り幅</span>${stopPct.toFixed(1)}%</div></div>
+    ${checks.map(c => `<div style="font-size:13px">${c[1] ? "○" : "×"} ${c[0]}：<span class="meta">${c[2]}</span></div>`).join("")}
+    <div class="note" style="margin-top:10px">発注前にPCのツールで「枠の残り」「今月の損益」を確認し、判断ノートを保存する。注文はIFDOCO（市場は東証）で、損切りの逆指値を必ず入れる。</div>`;
+}
+["kind", "buy", "stop", "target", "rng"].forEach(id => $("#" + id).addEventListener("input", calc));
+
+fetch("data/latest.json?" + Date.now()).then(r => r.json()).then(d => {
+  $("#meta").textContent = `更新 ${d.updated}（平日 12:40・15:45・18:10 に自動更新）` + (d.errors.length ? `／取得できなかったもの: ${d.errors.join("、")}` : "");
+  renderHot(d.hot); renderEv(d.events);
+}).catch(() => $("#meta").textContent = "データを読み込めなかった");
+try { const t = localStorage.getItem("tab"); if (t) show(t); } catch (e) {}
+calc();
+</script>
+</body>
+</html>

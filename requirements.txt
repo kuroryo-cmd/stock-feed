@@ -1,0 +1,4 @@
+requests
+pypdf
+pandas
+yfinance==1.7.0
